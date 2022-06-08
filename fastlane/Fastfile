@@ -1,0 +1,111 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :custom_lane do
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+
+  lane :build_ipa do
+    build_app(
+      # 每次打包之前clean一下
+      clean: true,
+      output_name: 'xcode_test.ipa',
+      scheme: "Runner",
+      configuration: 'Release',
+      output_directory: './ipafiles',
+      export_options: {
+        method: "development", # 这可以不指定
+        thinning: "<none>"
+      }
+    )
+    notification(app_icon: './fastlane/icon.png', title: '提醒', subtitle: '打包成功，已导出安装包', message: '打包成功')
+  end
+
+  lane :ios_ipa do
+    # 如果你用 pod install
+    # cocoapods
+    # 如果你没有申请adhoc证书，sigh会自动帮你申请，并且添加到Xcode里
+    # sigh(adhoc: true)
+    # 以下两个action来自fastlane-plugin-versioning，
+    # 第一个递增 Build，第二个设定Version。
+    # 如果你有多个target，就必须指定target的值，否则它会直接找找到的第一个plist修改
+    # 在这里我建议每一个打的包的Build都要不一样，这样crash了拿到日志，可以对应到ipa上
+    # increment_build_number_in_plist(target: [target_name])
+    # increment_version_number_in_plist(
+    #   target: [target_name],
+    #   version_number: '7.1.3'
+    #   )
+
+    # product 环境
+    # Updates the CLIENT_ID and GOOGLE_APP_ID string entries in the plist-file
+    update_plist( 
+      plist_path: "CEB_MPAAS/Debug/DebugConfig.plist",
+      block: proc do |plist|
+        plist[:workspaceId] = "product"
+      end
+    )
+
+    # gym用来编译ipa
+    gym(
+      # 每次打包之前clean一下
+      clean: true,
+      output_name: 'yghsh_product.ipa',
+      scheme: "Runner",
+      configuration: 'Release',
+      output_directory: './ipafiles/product',
+      export_options: {
+        method: "development", # 这可以不指定
+        thinning: "<none>"
+      }
+    )
+
+  # sit 环境
+  # Updates the CLIENT_ID and GOOGLE_APP_ID string entries in the plist-file
+  update_plist( 
+    plist_path: "CEB_MPAAS/Debug/DebugConfig.plist",
+    block: proc do |plist|
+      plist[:workspaceId] = "sit"
+    end
+  )
+
+  # gym用来编译ipa
+  gym(
+    # 每次打包之前clean一下
+    clean: true,
+    output_name: 'yghsh_sit.ipa',
+    scheme: "Runner",
+    configuration: 'Release',
+    output_directory: './ipafiles/sit',
+    export_options: {
+      method: "development", # 这可以不指定
+      thinning: "<none>"
+    }
+  )
+
+    # mac上的通知弹窗，通知打包完毕
+    notification(app_icon: './fastlane/icon.png', title: 'manager', subtitle: '打包成功，已导出安装包', message: 'product 和 sit 环境打包成功')
+    # 上传ipa到fir.im服务器，在fir.im获取firim_api_token
+    # firim(firim_api_token: [firim_api_token])
+
+    
+  end
+
+  
+
+end
